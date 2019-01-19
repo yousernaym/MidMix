@@ -2,6 +2,44 @@
 //
 
 #include "stdafx.h"
+#include <string>
+#include <fstream>
+#include <vector>
+
+void writeLE(std::ofstream &outFile, size_t size, unsigned value)
+{
+	outFile.write(reinterpret_cast<const char*>(&value), size);
+}
+
+void createWavFromRaw(const std::string &rawPath, const std::string &wavPath)
+{
+	int channelCount = 2;
+	int sampleSize = 2;
+	int sampleRate = 44100;
+	int blockAlign = sampleSize * channelCount;
+	std::ifstream inFile(rawPath, std::ios::binary | std::ios::ate);
+	size_t inSize = (size_t)inFile.tellg();
+	inFile.seekg(0);
+	std::vector<char> rawBuffer(inSize);
+	inFile.read((char*)&rawBuffer[0], inSize);
+	inFile.close();
+	
+	std::ofstream outFile(wavPath, std::ios::binary | std::ios::out);
+	outFile << "RIFF";
+	writeLE(outFile, 4, 36 + inSize);
+	outFile << "WAVEfmt ";
+	writeLE(outFile, 4, 16);
+	writeLE(outFile, 2, 1);
+	writeLE(outFile, 2, channelCount);
+	writeLE(outFile, 4, sampleRate);
+	writeLE(outFile, 4, sampleRate * blockAlign);
+	writeLE(outFile, 2, blockAlign);
+	writeLE(outFile, 2, sampleSize * 8);
+	outFile << "data";
+	writeLE(outFile, 4, inSize);
+	outFile.write((const char*)&rawBuffer[0], inSize);
+	outFile.close();
+}
 
 fluid_settings_t* settings;
 fluid_synth_t* synth;;
@@ -17,17 +55,13 @@ void init()
 	//Create synth
 	synth = new_fluid_synth(settings);
 	//Set the audio driver setting to file output
-	fluid_settings_setstr(settings, "audio.driver", "file");
+	//fluid_settings_setstr(settings, "audio.driver", "file");
 	//Load sound font
 	sfId = fluid_synth_sfload(synth, "OmegaGMGS2.sf2", true);
 	// use number of samples processed as timing source, rather than the system timer
 	fluid_settings_setstr(settings, "player.timing-source", "sample");
 	//Since this is a non-realtime szenario, there is no need to pin the sample data
 	fluid_settings_setint(settings, "synth.lock-memory", 0);
-	//Create midi player
-	player = new_fluid_player(synth);
-	//Create renderer
-	fluid_file_renderer_t* renderer;
 }
 
 extern "C" __declspec(dllexport)
@@ -39,16 +73,28 @@ BOOL sfLoaded()
 extern "C" __declspec(dllexport)
 void mixdown(char *midiPath, char *mixdownPath)
 {
-	//Set mixdown path
-	fluid_settings_setstr(settings, "audio.file.name", mixdownPath);
+	//Set raw mixdown path
+	char rawMixdownPath[256];
+	strcpy_s(rawMixdownPath, mixdownPath);
+	int mixdownPathLen = strlen(mixdownPath);
+	rawMixdownPath[mixdownPathLen++] = '_';
+	rawMixdownPath[mixdownPathLen] = 0;
+	
+	fluid_settings_setstr(settings, "audio.file.name", rawMixdownPath);
+	//fluid_settings_setstr(settings, "audio.file.name", "test.raw");
+	
+	//Create midi player
+	player = new_fluid_player(synth);
+
 	//Load midi file and start playing
 	fluid_player_add(player, midiPath);
 	fluid_player_play(player);
-	//Create audio driver
-	//fluid_audio_driver_t* adriver = new_fluid_audio_driver(settings, synth);
+	///Create audio driver
+	///fluid_audio_driver_t* adriver = new_fluid_audio_driver(settings, synth);
 	
 	//Create renderer
 	renderer = new_fluid_file_renderer(synth);
+
 	//Render to file
 	while (fluid_player_get_status(player) == FLUID_PLAYER_PLAYING)
 	{
@@ -60,16 +106,18 @@ void mixdown(char *midiPath, char *mixdownPath)
 	// just for sure: stop the playback explicitly and wait until finished
 	fluid_player_stop(player);
 	fluid_player_join(player);
-
+	delete_fluid_file_renderer(renderer);
+	delete_fluid_player(player);
+	createWavFromRaw(rawMixdownPath, mixdownPath);
 }
 
 extern "C" __declspec(dllexport)
 void close()
 {
-	delete_fluid_file_renderer(renderer);
-	delete_fluid_player(player);
 	delete_fluid_synth(synth);
 	delete_fluid_settings(settings);
 }
+
+
 
 
