@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <climits>
 
 void writeLE(std::ofstream &outFile, size_t size, unsigned value)
 {
@@ -20,9 +21,21 @@ void createWavFromRaw(const std::string &rawPath, const std::string &wavPath)
 	std::ifstream inFile(rawPath, std::ios::binary | std::ios::ate);
 	size_t inSize = (size_t)inFile.tellg();
 	inFile.seekg(0);
-	std::vector<char> rawBuffer(inSize);
+	std::vector<short> rawBuffer(inSize / sizeof(short));
 	inFile.read((char*)&rawBuffer[0], inSize);
 	inFile.close();
+
+	//Normalize
+	short peak = 0;
+	for (short sample : rawBuffer)
+	{
+		if (peak < abs(sample))
+			peak = abs(sample);
+	}
+	float normalizingScale = SHRT_MAX * 0.99f / peak;
+	for (short &sample : rawBuffer)
+		sample = (short)(sample * normalizingScale);
+
 	
 	std::ofstream outFile(wavPath, std::ios::binary | std::ios::out);
 	outFile << "RIFF";
@@ -52,16 +65,18 @@ void init()
 {
 	//Create settings
 	settings = new_fluid_settings();
+	// use number of samples processed as timing source, rather than the system timer
+	fluid_settings_setstr(settings, "player.timing-source", "sample");
+	//Since this is a non-realtime szenario, there is no need to pin the sample data
+	fluid_settings_setint(settings, "synth.lock-memory", 0);
+	//Use multiple cores
+	fluid_settings_setint(settings, "synth.cpu-cores", 6);
 	//Create synth
 	synth = new_fluid_synth(settings);
 	//Set the audio driver setting to file output
 	//fluid_settings_setstr(settings, "audio.driver", "file");
 	//Load sound font
-	sfId = fluid_synth_sfload(synth, "OmegaGMGS2.sf2", true);
-	// use number of samples processed as timing source, rather than the system timer
-	fluid_settings_setstr(settings, "player.timing-source", "sample");
-	//Since this is a non-realtime szenario, there is no need to pin the sample data
-	fluid_settings_setint(settings, "synth.lock-memory", 0);
+	sfId = fluid_synth_sfload(synth, "OmegaGMGS2.sf2", true);	
 }
 
 extern "C" __declspec(dllexport)
@@ -106,6 +121,7 @@ void mixdown(char *midiPath, char *mixdownPath)
 	// just for sure: stop the playback explicitly and wait until finished
 	fluid_player_stop(player);
 	fluid_player_join(player);
+
 	delete_fluid_file_renderer(renderer);
 	delete_fluid_player(player);
 	createWavFromRaw(rawMixdownPath, mixdownPath);
