@@ -32,7 +32,7 @@ void createWavFromRaw(const std::string &rawPath, const std::string &wavPath)
 		if (peak < abs(sample))
 			peak = abs(sample);
 	}
-	float normalizingScale = SHRT_MAX * 0.99f / peak;
+	float normalizingScale = SHRT_MAX * 0.89125f / peak; //Leave 1 dB headroom for video encoding
 	for (short &sample : rawBuffer)
 		sample = (short)(sample * normalizingScale);
 
