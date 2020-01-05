@@ -76,7 +76,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>D:\kodning\Tools\vcpkg-master\packages\fluidsynth_x64-windows\include;$(IncludePath)</IncludePath>
-    <LibraryPath>d:\kodning\tools\vcpkg-master\installed\x64-windows\debug\lib\;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(ProjectDir)fluidsynth\$(Configuration)\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -84,7 +84,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>D:\kodning\Tools\vcpkg-master\packages\fluidsynth_x64-windows\include;$(IncludePath)</IncludePath>
-    <LibraryPath>d:\kodning\tools\vcpkg-master\installed\x64-windows\lib\;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(ProjectDir)fluidsynth\$(Configuration)\;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
