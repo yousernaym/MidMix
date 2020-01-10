@@ -76,7 +76,7 @@ void init()
 	//Set the audio driver setting to file output
 	//fluid_settings_setstr(settings, "audio.driver", "file");
 	//Load sound font
-	sfId = fluid_synth_sfload(synth, "OmegaGMGS2.sf2", true);	
+	sfId = fluid_synth_sfload(synth, "soundfont.sf2", true);	
 }
 
 extern "C" __declspec(dllexport)
