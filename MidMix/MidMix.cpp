@@ -19,7 +19,7 @@ void createWavFromRaw(const std::string &rawPath, const std::string &wavPath)
 	int sampleRate = 44100;
 	int blockAlign = sampleSize * channelCount;
 	std::ifstream inFile(rawPath, std::ios::binary | std::ios::ate);
-	size_t inSize = (size_t)inFile.tellg();
+	int inSize = (int)inFile.tellg();
 	inFile.seekg(0);
 	std::vector<short> rawBuffer(inSize / sizeof(short));
 	inFile.read((char*)&rawBuffer[0], inSize);
@@ -91,7 +91,7 @@ void mixdown(char *midiPath, char *mixdownPath)
 	//Set raw mixdown path
 	char rawMixdownPath[256];
 	strcpy_s(rawMixdownPath, mixdownPath);
-	int mixdownPathLen = strlen(mixdownPath);
+	size_t mixdownPathLen = strlen(mixdownPath);
 	rawMixdownPath[mixdownPathLen++] = '_';
 	rawMixdownPath[mixdownPathLen] = 0;
 	
