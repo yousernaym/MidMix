@@ -6,6 +6,7 @@
 #include <fstream>
 #include <vector>
 #include <climits>
+#include <thread>
 
 void writeLE(std::ofstream &outFile, size_t size, unsigned value)
 {
@@ -32,7 +33,7 @@ void createWavFromRaw(const std::string &rawPath, const std::string &wavPath)
 		if (peak < abs(sample))
 			peak = abs(sample);
 	}
-	float normalizingScale = SHRT_MAX * 0.89125f / peak; //Leave 1 dB headroom for video encoding
+	float normalizingScale = SHRT_MAX * 0.89125f / peak; //Leave 1 dB headroom for lossy compression
 	for (short &sample : rawBuffer)
 		sample = (short)(sample * normalizingScale);
 
@@ -67,10 +68,13 @@ void init()
 	settings = new_fluid_settings();
 	// use number of samples processed as timing source, rather than the system timer
 	fluid_settings_setstr(settings, "player.timing-source", "sample");
-	//Since this is a non-realtime szenario, there is no need to pin the sample data
+	//Since this is a non-realtime scenario, there is no need to pin the sample data
 	fluid_settings_setint(settings, "synth.lock-memory", 0);
+	
 	//Use multiple cores
-	fluid_settings_setint(settings, "synth.cpu-cores", 6);
+	auto coreCount = std::thread::hardware_concurrency();
+	fluid_settings_setint(settings, "synth.cpu-cores", coreCount == 0 ? 2 : coreCount); //If unable to detect core count, assume at least two
+	
 	//Create synth
 	synth = new_fluid_synth(settings);
 	//Set the audio driver setting to file output
