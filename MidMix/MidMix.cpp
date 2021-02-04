@@ -55,8 +55,8 @@ void createWavFromRaw(const std::string &rawPath, const std::string &wavPath)
 	outFile.close();
 }
 
-fluid_settings_t* settings;
-fluid_synth_t* synth;;
+fluid_settings_t* settings = nullptr;
+fluid_synth_t* synth = nullptr;
 int sfId;
 fluid_player_t* player;
 fluid_file_renderer_t* renderer;
@@ -134,8 +134,16 @@ void mixdown(char *midiPath, char *mixdownPath)
 extern "C" __declspec(dllexport)
 void close()
 {
-	delete_fluid_synth(synth);
-	delete_fluid_settings(settings);
+	if (synth)
+	{
+		delete_fluid_synth(synth);
+		synth = nullptr;
+	}
+	if (settings)
+	{
+		delete_fluid_settings(settings);
+		settings = nullptr;
+	}
 }
 
 
