@@ -22,6 +22,24 @@ The SoundFont is a `soundfont.sf2` placed next to `VM.exe` at runtime; `sfLoaded
 - Built as part of the repo-root `VisualMusic.sln`; `MidMix.dll` lands in the repo-root `x64\<Config>\` and
   VisualMusic's post-build copies it into the app output.
 
+## Updating Fluidsynth
+
+The Fluidsynth version is whatever the `builtin-baseline` in [vcpkg.json](vcpkg.json) resolves to (no
+`vcpkg install`/`vcpkg upgrade` in manifest mode). To move to a newer Fluidsynth:
+
+1. Update the vcpkg checkout to a newer snapshot and re-bootstrap (from the vcpkg root, e.g. `D:\dev\vcpkg`):
+   `git fetch origin && git checkout <newer-release-tag-or-origin/master> && .\bootstrap-vcpkg.bat`.
+2. Bump this manifest's baseline to the new snapshot: `vcpkg x-update-baseline --x-manifest-root=<this dir>`
+   (or set `builtin-baseline` by hand to `git -C <vcpkg root> rev-parse HEAD`). Media's manifest is separate,
+   so bumping here moves Fluidsynth (and its transitive deps like glib) only.
+3. Rebuild `VisualMusic.sln` — the new version installs automatically (compiles from source once, then cached).
+4. **Test a real MIDI mixdown** to confirm `init`/`mixdown` still behave (a major-version bump can shift the
+   Fluidsynth API).
+
+To pin an exact version instead of the baseline default, add an `overrides` entry to [vcpkg.json](vcpkg.json),
+e.g. `"overrides": [ { "name": "fluidsynth", "version": "2.5.4" } ]`; the version must exist at/after the
+baseline (browse `<vcpkg root>\versions\f-\fluidsynth.json`).
+
 ## Native interface (P/Invoke surface)
 
 Declared in [../../VisualMusic/MidMix.cs](../../VisualMusic/MidMix.cs) (`cdecl`, `MidMix.dll`):
