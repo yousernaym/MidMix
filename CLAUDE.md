@@ -8,7 +8,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 repo: `yousernaym/MidMix`) that builds `MidMix.dll`, which the app calls via P/Invoke. It renders a MIDI
 file to a WAV mixdown using **Fluidsynth** and a SoundFont.
 
-Fluidsynth is supplied through vcpkg (`fluidsynth:x64-windows`) — see the repo-root [README.md](../../README.md).
+Fluidsynth is supplied through vcpkg in **manifest mode**: the dependency (`fluidsynth`) is declared in
+[vcpkg.json](vcpkg.json) at this submodule's root, with versions pinned via `builtin-baseline`. The x64
+build auto-restores it into a local `vcpkg_installed/` (enabled by `VcpkgEnableManifest` in
+[MidMix/MidMix.vcxproj](MidMix/MidMix.vcxproj)); `VcpkgAutoLink` then links the libs and applocal copies the
+DLLs next to `MidMix.dll`. See the repo-root [README.md](../../README.md).
 The SoundFont is a `soundfont.sf2` placed next to `VM.exe` at runtime; `sfLoaded()` reports whether it was found.
 
 ## Build & output

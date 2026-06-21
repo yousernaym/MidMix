@@ -1,0 +1,9 @@
+{
+  "name": "midmix",
+  "version-string": "1.0.0",
+  "description": "Native MIDI->WAV mixdown layer for Visual Music (Fluidsynth).",
+  "builtin-baseline": "f3e10653cc27d62a37a3763cd84b38bca07c6075",
+  "dependencies": [
+    "fluidsynth"
+  ]
+}
